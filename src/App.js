@@ -1,6 +1,5 @@
 import "./App.css";
 import React from "react";
-import video from "../src/assets/video/video.mp4";
 import PlayerControls from "./components/PlayerControls/PlayerControls";
 import sprite from "../src/assets/svg/sprite.svg";
 import Spinner from "./components/Spinner/Spinner";
@@ -236,7 +235,7 @@ class App extends React.Component {
 
         <div className="player" ref={this.playerRef}>
           <video
-            src={video}
+            src="https://drive.google.com/uc?export=download&id=1nqy3KXnybfq7qAjsiIzzjNf_tYCf4UJy"
             className="player--video"
             preload="metadata"
             ref={this.videoRef}
