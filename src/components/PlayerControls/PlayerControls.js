@@ -32,11 +32,20 @@ const playerControls = (props) => {
           <div
             ref={props.progressTimeRef}
             className={classes.ProgressBarTimer}
-          ></div>
+          >
+            <video src={props.src}>Video not supported</video>
+            <span>&nbsp;</span>
+          </div>
           <div
             ref={props.progressBarFilled}
             className={classes.ProgressBarFilled}
             onMouseMove={props.progressTimerHandler}
+          >
+            &nbsp;
+          </div>
+          <div
+              ref={props.progressBarFilledLoaded}
+              className={classes.ProgressBarFilledLoaded}
           >
             &nbsp;
           </div>
@@ -101,6 +110,7 @@ const playerControls = (props) => {
             onClick={props.fwdBtn}
             onMouseOver={props.showTooltipHandler}
             onMouseOut={props.hideTooltipHandler}
+
             data-tooltip='Forward 10 sec'
           >
             <use href={sprite + "#icon-forward_10"}></use>

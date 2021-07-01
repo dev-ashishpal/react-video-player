@@ -1,6 +1,7 @@
-import "./App.css";
+import classes from "./App.module.css";
 import React from "react";
 import PlayerControls from "./components/PlayerControls/PlayerControls";
+import video from "../src/assets/video/video.mp4";
 import sprite from "../src/assets/svg/sprite.svg";
 import Spinner from "./components/Spinner/Spinner";
 import Tooltip from "./components/Tooltip/Tooltip";
@@ -10,6 +11,7 @@ class App extends React.Component {
     super(props);
     this.videoRef = React.createRef();
     this.progressBarFilledRef = React.createRef();
+    this.progressBarFilledLoadedRef = React.createRef();
     this.progressBarThumbRef = React.createRef();
     this.currentTimeRef = React.createRef();
     this.durationTimeRef = React.createRef();
@@ -33,6 +35,7 @@ class App extends React.Component {
     tooltipLeft: 0,
     tooltipTop: 0,
     tooltipText: null,
+    videoClass: classes.PlayerVideo,
   };
 
   removeMiddleIcon = () => {
@@ -149,6 +152,12 @@ class App extends React.Component {
   fullscreenHandler = () => {
     if (this.playerRef.current.requestFullscreen) {
       this.playerRef.current.requestFullscreen();
+      if (window.innerWidth < 600) {
+        console.log("mobile");
+        this.setState({
+          videoClass: [classes.PlayerVideo, classes.Rotate].join(" "),
+        });
+      }
       this.setState({
         fullscreenIcon: "#icon-fullscreen",
         showMiddleIcon: true,
@@ -158,7 +167,10 @@ class App extends React.Component {
     }
     if (document.exitFullscreen) {
       document.webkitExitFullscreen();
-
+      // if(window.innerWidth < 600) {
+      //   console.log('mobile');
+      //   this.setState({videoClass:classes.PlayerVideo});
+      // }
       this.setState({
         fullscreenIcon: "#icon-fullscreen_exit",
         showMiddleIcon: true,
@@ -174,6 +186,19 @@ class App extends React.Component {
       (e.nativeEvent.offsetX / this.progressBarRef.current.offsetWidth) *
       this.videoRef.current.duration;
 
+    if (
+      this.progressTimeRef.current.getBoundingClientRect().x +
+        this.progressTimeRef.current.getBoundingClientRect().width >=
+      this.videoRef.current.getBoundingClientRect().x +
+        this.videoRef.current.getBoundingClientRect().width
+    ) {
+      console.log("is greater");
+      this.progressTimeRef.current.style.left = `${
+        this.progressBarRef.current.offsetWidth -
+        (10 + this.progressTimeRef.current.offsetWidth / 2)
+      }px`;
+    }
+
     let scrubMin = Math.floor(scrubTime / 60);
     let scrubSec = Math.floor(scrubTime - scrubMin * 60);
 
@@ -183,7 +208,10 @@ class App extends React.Component {
     if (scrubMin < 10) {
       scrubMin = "0" + scrubMin;
     }
-    this.progressTimeRef.current.innerHTML = `${scrubMin}:${scrubSec}`;
+    this.progressTimeRef.current.querySelector(
+      "span"
+    ).innerHTML = `${scrubMin}:${scrubSec}`;
+    this.progressTimeRef.current.querySelector("video").currentTime = scrubTime;
     // console.log(`${scrubMin}:${scrubSec}, is the time`);
   };
 
@@ -224,20 +252,40 @@ class App extends React.Component {
     this.setState({ showTooltip: false });
   };
 
+  bufferedTimeHandler = () => {
+    let time = this.videoRef.current.currentTime;
+    let range = 0;
+    let bf = this.videoRef.current.buffered;
+    if (this.videoRef.current.readyState === 4) {
+      while (!(bf.start(range) <= time && time <= bf.end(range))) {
+        range += 1;
+      }
+      let percentage = (bf.end(range) / this.videoRef.current.duration) * 100;
+      this.progressBarFilledLoadedRef.current.style.width = `${percentage}%`;
+      console.log(percentage);
+    }
+  };
+
+  keyEventsHandler = () => {};
+
   render() {
     return (
-      <div className="App">
+      <div className={classes.App}>
         {this.state.showTooltip && this.state.tooltipText !== null ? (
           <Tooltip left={this.state.tooltipLeft} top={this.state.tooltipTop}>
             {this.state.tooltipText}
           </Tooltip>
         ) : null}
 
-        <div className="player" ref={this.playerRef}>
+        <div
+          onKeyUp={this.keyEventsHandler()}
+          className={classes.Player}
+          ref={this.playerRef}
+        >
           <video
             src="https://drive.google.com/uc?export=download&id=1nqy3KXnybfq7qAjsiIzzjNf_tYCf4UJy"
-            className="player--video"
-            preload="metadata"
+            className={this.state.videoClass}
+            preload="auto"
             ref={this.videoRef}
             onTimeUpdate={this.progressHandler}
             onWaiting={this.spinnerShowHandler}
@@ -247,6 +295,7 @@ class App extends React.Component {
             onContextMenu={(e) => {
               e.preventDefault();
             }}
+            onProgress={this.bufferedTimeHandler}
             // onLoadedData={this.spinnerCloseHandler}
             // onCanPlayThrough={this.spinnerCloseHandler}
             // onProgress={this.spinnerCloseHandler}
@@ -256,11 +305,13 @@ class App extends React.Component {
           </video>
           {/*<h2 className="player--heading">Video Title Here.</h2>*/}
           <PlayerControls
+            src={video}
             playPauseHandler={this.playPauseHandler}
             playPauseIcon={this.state.playPauseIcon}
             muteHandler={this.muteHandler}
             muteIconHandler={this.state.muteIcon}
             progressBarFilled={this.progressBarFilledRef}
+            progressBarFilledLoaded={this.progressBarFilledLoadedRef}
             progressBarThumb={this.progressBarThumbRef}
             currentTimeRef={this.currentTimeRef}
             durationTimeRef={this.durationTimeRef}
@@ -280,7 +331,7 @@ class App extends React.Component {
             hideTooltipHandler={this.hideTooltipHandler}
           />
           {this.state.showMiddleIcon ? (
-            <div className="middle-icon">
+            <div className={classes.MiddleIcon}>
               <svg>
                 <use href={sprite + this.state.middleIcon}></use>
               </svg>
